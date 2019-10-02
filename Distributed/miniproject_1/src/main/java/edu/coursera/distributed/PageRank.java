@@ -55,19 +55,15 @@ public final class PageRank {
         //throw new UnsupportedOperationException();
     	
     	JavaPairRDD<Integer, Double> newRanks = sites.join(ranks).flatMapToPair(kv -> {
-            Integer websiteId = kv._1;
-            Tuple2<Website, Double> value = kv._2;
+            Website site = kv._2()._1();
+            Double currentRank = kv._2()._2();
 
-            Website edges = value._1;
-            Double currentRank = value._2;
-            Double rankRatioPart = currentRank / (double) edges.getNEdges();
-
-            List<Tuple2<Integer, Double>> contribs = new LinkedList<Tuple2<Integer, Double>>();
-            Iterator<Integer> iter = edges.edgeIterator();
+            LinkedList<Tuple2<Integer, Double>> contribs = new LinkedList<Tuple2<Integer, Double>>();
+            Iterator<Integer> iter = site.edgeIterator();
 
             while (iter.hasNext()) {
                 final int target = iter.next();
-                contribs.add(new Tuple2<Integer, Double>(target, rankRatioPart));
+                contribs.add(new Tuple2<Integer, Double>(target, currentRank / (double) site.getNEdges()));
             }
             return contribs;
         });
