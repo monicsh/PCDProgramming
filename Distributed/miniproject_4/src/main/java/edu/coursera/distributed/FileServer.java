@@ -5,8 +5,12 @@ import java.net.Socket;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.io.BufferedReader;
 import java.io.File;
+import java.util.concurrent.*;
 
 /**
  * A basic and very limited implementation of a file server that responds to GET
@@ -37,10 +41,11 @@ public final class FileServer {
         while (true) {
 
             // TODO Delete this once you start working on your solution.
-            throw new UnsupportedOperationException();
+            //throw new UnsupportedOperationException();
 
             // TODO 1) Use socket.accept to get a Socket object
-
+            Socket s = socket.accept();
+            
             /*
              * TODO 2) Now that we have a new Socket object, handle the parsing
              * of the HTTP message on that socket and returning of the requested
@@ -77,6 +82,49 @@ public final class FileServer {
              * If you wish to do so, you are free to re-use code from
              * MiniProject 2 to help with completing this MiniProject.
              */
+            Thread thread = new Thread(() -> {
+					try {
+						InputStream stream = s.getInputStream();
+					 
+		            	InputStreamReader reader = new InputStreamReader(stream);
+		            	BufferedReader in = new BufferedReader(reader);
+		            	
+		            	String line = in.readLine();
+		            
+		            	assert line != null;
+		            	assert line.startsWith("GET");
+		            	
+		            	final String path = line.split(" ")[1];
+		            	
+		            	OutputStream out = s.getOutputStream();
+		            	PrintWriter printer = new PrintWriter(out);
+		            	
+		            	PCDPPath pcdpath = new PCDPPath(path); 
+		            	String contents = fs.readFile(pcdpath);
+		            	if (contents != null ) {
+		            		printer.write("HTTP/1.0 200 OK\r\n");
+		            		printer.write("Server: FileServer\r\n");
+		            		printer.write("\r\n");
+		            		printer.write(contents + "\r\n");
+		            		
+		            	} else {
+		            		printer.write("HTTP/1.0 404 NOT FOUND\r\n");
+		            		printer.write("Server: FileServer\r\n");
+		            		printer.write("\r\n");
+		            		
+		            	}
+		            	printer.flush();
+		            	printer.close();
+		            	
+		            	out.flush();
+		            	out.close();
+					} catch (IOException e) {
+						throw new RuntimeException(e);
+					}
+            });
+            
+            thread.start();
+            
         }
     }
 }

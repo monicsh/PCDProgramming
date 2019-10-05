@@ -280,7 +280,7 @@ public class FileServerTest extends TestCase {
             driverThreads[i].start();
         }
 
-        Thread.sleep(10000);
+        Thread.sleep(800);
 
         server.socket.close();
         server.thread.interrupt();
